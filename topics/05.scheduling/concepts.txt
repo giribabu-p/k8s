@@ -1,0 +1,9 @@
+#scheduling
+
+#manual scheduling
+
+#Daemonsets
+
+#static Pods
+
+#Multiple schedules

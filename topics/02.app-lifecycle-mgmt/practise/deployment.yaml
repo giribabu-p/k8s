@@ -1,0 +1,161 @@
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name: nginx-deployment
+  namespace: default
+  labels: 
+    server: nginx
+    test: yess
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      server: nginx 
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+      metadata:
+        labels:
+          server: nginx
+      spec:
+        terminationGracePeriodSeconds: 30
+        #pod level settings, common to all containers unless overrides at container level
+        securityContext:
+          runAsUser: 1000
+          fsGroup: 2000
+        serviceAccountName: dummy
+        #taint is applied on nodes and tolerations should define at pod level
+        tolerations:
+        - key: app
+          value: server
+          operator: Equal
+          effect: NoSchedule
+        - key: app 
+          value: db
+          operator: Equal
+          effect: NoSchedule
+        #nodeselector and nodeaffinity
+        nodeSelector:
+          app: server   #If not match - 0/2 nodes are available: 2 node(s) didn't match Pod's node affinity/selector #same error log, if given labels are different for nodeSelector and affinity.
+        affinity:
+          #Describes node affinity scheduling rules for the pod.   
+          #the pod specifies "required node affinity," meaning it must be scheduled on nodes with the label app=server. If no matching node is available, the pod will not be scheduled.
+          nodeAffinity: 
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: app 
+                      operator: In
+                      values:
+                      - server       #If not match - 0/2 nodes are available: 2 node(s) didn't match Pod's node affinity/selector
+        #init containers failing. fix the issue and uncomment it
+        #initContainers:
+          #- name: init-1
+            #image: busybox:latest
+            #the init container will create a directory called /data before the application container starts. The application container will then be able to mount the /data directory and use it for storage.
+            #command: ["sh", "-c", "mkdir /data && sleep 5"]
+          #- name: init-2
+            #image: busybox:latest
+            #command: ["sh", "-c", "echo Initialization done && sleep 5"]
+        
+        containers:
+          - name: nginx-pod 
+            image: nginx 
+            ports:
+              - containerPort: 80
+            #pod level context will be overriden by this
+            securityContext:
+              runAsUser: 0  #root user
+              #linux capabilities are only supported at the container level and not at the pod level
+              capabilities:
+                drop:
+                - NET_RAW
+                add:
+                - MAC_ADMIN
+            resources:
+              requests:
+                cpu: 100m
+                memory: 200Mi
+              limits:
+                cpu: 200m 
+                memory: 300Mi
+            livenessProbe:
+              httpGet:
+                path: /
+                port: 80  #sends an HTTP GET request to the path / on port 80.
+              initialDelaySeconds: 10  #The probe starts after an initial delay of 10 seconds 
+              periodSeconds: 5  #Subsequent probe checks occur every 5 seconds 
+            readinessProbe:
+              httpGet:
+                path: /
+                port: 80
+              initialDelaySeconds: 15
+              periodSeconds: 5
+            startupProbe:
+              httpGet:
+                path: /
+                port: 80
+              failureThreshold: 30  #Allows for up to 30 consecutive failures (3 default) before marking the container as failed.
+            #1st method of env vars defining
+            #env:
+            #- name: SLEEP_INTERVAL
+              #value: "10"
+            #- name: RESTART_COUNT
+              #value: "2"
+            #2nd method of defining env vars
+            envFrom:
+            - configMapRef:
+                name: myapp-sleep-cm
+            - secretRef:
+                name: myapp-restart-secret
+            #3rd method of defining env vars
+            env: 
+            - name: SLEEP_INTERVALS
+              valueFrom:
+                configMapKeyRef:
+                  name: myapp-sleep-cm
+                  key: SLEEP_INTERVAL #key in configmap, not value
+            #4th way of injecting env vars
+            volumeMounts:
+            - name: myapp-cm-vol
+              mountPath: /etc/config #path in container to be mounted
+            - name: myapp-secret-vol
+              mountPath: /etc/secret
+          #Multi-container sidecar pattern
+          - name: logging-agent
+            image: fluent/fluent-bit:latest
+            #must if defined for one container in a pod otherwise it gives error.
+            resources:
+              requests:
+                cpu: 100m
+                memory: 200Mi
+              limits:
+                cpu: 200m 
+                memory: 300Mi
+
+        volumes: 
+        - name: myapp-cm-vol
+          configMap: 
+            name: myapp-second-cm
+        - name: myapp-secret-vol
+          secret:
+            secretName: myapp-second-secret
+
+          
+
+        
+
+  
+        
+
+
+
+
+
+
+
+
+

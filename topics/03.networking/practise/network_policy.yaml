@@ -1,0 +1,150 @@
+#example from k8s documentation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 172.17.0.0/16
+            except:
+              - 172.17.1.0/24
+        #allow pods within this namespace if podselector is nor defined
+        - namespaceSelector:
+            matchLabels:
+              project: myproject
+        - podSelector:
+            matchLabels:
+              role: frontend
+      ports:
+        - protocol: TCP
+          port: 6379
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/24
+      ports:
+        - protocol: TCP
+          port: 5978
+
+
+
+
+
+#In this example, the Network Policy named allow-frontend allows incoming traffic to Pods 
+#labeled with app: frontend from Pods labeled with app: backend on port 80.
+#If no policyTypes are specified on a NetworkPolicy then by default Ingress will always be set and Egress will be set if the NetworkPolicy has any egress rules.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: backend
+      ports:
+      - protocol: TCP
+        port: 80
+
+---
+#Allow All Traffic to a Specific Namespace, Deny All Other Traffic
+#This Network Policy allows all traffic to Pods within the same namespace and denies all traffic from other namespaces:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-namespace
+spec:
+  podSelector: {} # Match all Pods in the namespace
+  ingress: [] # Allow all incoming traffic
+  egress: [] # Allow all outgoing traffic
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+#Allow Only Specific Ports and Protocols
+#This Network Policy allows incoming traffic to Pods labeled with app: web only on port 80 (HTTP) and port 443 (HTTPS):
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-web-ports
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  ingress:
+    - ports:
+      - protocol: TCP
+        port: 80
+    - ports:
+      - protocol: TCP
+        port: 443
+
+---
+#Deny All Ingress Traffic to a Namespace
+#This Network Policy denies all incoming traffic to Pods within the my-namespace namespace:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-ingress
+namespace: my-namespace
+spec:
+  podSelector: {} # Match all Pods in the namespace
+  policyTypes:
+    - Ingress
+
+#Allow all ingress traffic
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all-ingress
+spec:
+  podSelector: {}
+  ingress:
+  - {}
+  policyTypes:
+  - Ingress
+
+#default deny all
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+#Allow Traffic from Specific IP Addresses
+#This Network Policy allows incoming traffic from specific IP addresses (e.g., 192.168.1.1 and 10.0.0.1) to Pods labeled with app: backend:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-specific-ips
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  ingress:
+    - from:
+      - ipBlock:
+          cidr: 192.168.1.1/32
+      - ipBlock:
+          cidr: 10.0.0.1/32

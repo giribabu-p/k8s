@@ -1,0 +1,163 @@
+Docker:
+- Docker is a container platform designed to make it easy to deploy and run applications in the form of containers.
+- Build once, run anywhere approach.
+- Docker solves the issues related to deploying apps. With Docker, a developer can package all software and its application
+  dependencies in a container. Then using docker, it can be shipped and can run in all environments/platforms.
+- Dockerfile is a simple text file with instructions to build the image.
+- Docker images are read only templates used to create docker containers. Containers are running instance of an image.
+- Docker uses os-level virtualization to deliver software in packages called containers.
+- Containers are executable unit of software in which application code is packaged along with its libraries or dependencies
+  so that it can be run anywhere, whether it can be desktop or cloud.
+
+Kubernetes:
+- k8s is a container management or orchestration tool which automates the deployment and management of containers. 
+  The whole process of automatically deploying and managing Containers is known as container orchestration.
+
+  Architecture:
+  Control plan components:
+  - API Server:
+        Main entrypoint to cluster. Its like frontend for k8s. Users, cli all talk to API server to interact with k8s cluster.
+        primary management component in Kubernetes.
+  - ETCD:
+        Distributed, reliable key value store used by k8s to store all the data used to manage cluster.
+  - Shcheduler:
+        Decides where to place the container on worker nodes.
+  - COntrollers:
+        A controller is a control loop that watches the shared state of the cluster through API server and makes chnages 
+        attempting to move current state towards desried state.
+   
+   worker node components:
+   - Kubelet:
+        An agent taht runs on all worker nodes. It make sures that containers are running in a pod. 
+        Always communicates with API server to launch pods if they are assigned. Reports the node status and obtain the list 
+        of ontainers to run.
+   - Kubeproxy:
+        A networking component that runs on each worker node to enable communication between pods and services. It forwards 
+        network traffic to the correct destination based on the service and pod ip addresses, ensuring that pods can communicate
+        with each other.
+   - container runtime interface:
+        containe runtime - A software responsible for running containers on the worker nodes. 
+        container runtime interface - An API for container runtimes to integrate with kubelet. 
+        
+        The CRI is a plugin interface which enables the kubelet to use a wide variety of container runtimes (without having a need to recompile the cluster components).
+        You need a working container runtime on each Node in your cluster, so that the kubelet can launch Pods and their containers.
+        The Container Runtime Interface (CRI) is the main protocol for the communication between the kubelet and Container Runtime.
+
+        CRI allowed any vendor to work as container runtime for k8s as long as they adhere to the OCI standards. OCI
+        stands for Open container initiative and it consists of an imagespec and runtimespec.
+        Imagespec means specifications on how an image should be built.
+        runtimespec defines the standards on how any container runtime should be developed.
+        SO keeping these standards in mind, anyone can build a container runtime that can be used by anybody to work with k8s.
+
+   -    (optional)container network interface:
+        CNI is a specification and a set of plugins that manage network connectivity for containers and Pods in a K8s cluster.
+        It provides a standardized way to configure networking for containers. Common CNI plugins include Calico, Flannel, 
+        and Weave, which handle various networking tasks like IP address assignment, routing, and network isolation.
+
+Why Kubernetes Instead of Docker:
+
+While Docker is essential for containerizing applications, Kubernetes complements Docker by providing
+ a robust container orchestration and management framework. 
+ 
+ Here's why you might choose Kubernetes over Docker in certain scenarios:
+
+ 1. Scalability: Kubernetes scales applications across multiple hosts, making it suitable for 
+    large-scale and production environments. Docker alone is limited to single host deployments.
+
+ 2. High Availability: K8s offers built-in features for high availability, including automatic 
+   failover and self-healing. Docker lacks these features out of the box.
+
+ 3. Declarative Configuration: Kubernetes allows you to define the desired state of your application
+    using declarative configuration files, making it easier to manage complex applications and infrastructure as code.
+
+ 4. Advanced Networking: Kubernetes provides advanced networking features, such as service discovery, 
+    load balancing, and network policies, which are essential for microservices architectures.
+
+ 5. Rolling Updates and Rollbacks: Kubernetes supports rolling updates and rollbacks of application versions, 
+    ensuring minimal downtime during updates.
+
+ 6. Ecosystem: Kubernetes has a rich ecosystem of tools and extensions that enhance its functionality, including
+    Helm for package management, Prometheus for monitoring, and Istio for service mesh.
+
+ In summary, while Docker is crucial for containerization, Kubernetes is the preferred choice when you need to manage,
+ scale, and orchestrate containers in a production environment or when dealing with complex, multi-service applications. 
+ Docker and Kubernetes can also be used together, with Docker providing containerization, and Kubernetes managing the 
+ orchestration and scaling aspects.
+
+
+Container runtimes used by k8s:
+
+    Kubernetes supports a variety of container runtimes, including:
+        * containerd
+        * CRI-O
+        * Docker
+    The default container runtime for Kubernetes is containerd. 
+    containerd is a lightweight, vendor-neutral container runtime. It is used by many popular container orchestration 
+    platforms, including Kubernetes, Docker Swarm, and Nomad.
+    CRI-O is another popular container runtime for Kubernetes.
+    Docker is a popular container runtime that can also be used with Kubernetes. However, Docker is not the default 
+    container runtime for Kubernetes because it is not as lightweight as containerd or CRI-O.
+
+    If you are not sure which container runtime to choose, you can use the default container runtime for Kubernetes,
+     which is containerd.
+
+Why k8s dropped Docker:
+    Kubernetes is dropping Docker as a container runtime because it wants to be more vendor-neutral and flexible. 
+    Docker is a popular container runtime, but it is not the only one. There are many other container runtimes available, 
+    such as containerd and CRI-O.
+
+    Kubernetes wants to be able to support all of these container runtimes, so it is removing the direct integration with Docker. 
+    This will allow users to choose the container runtime that best meets their needs.
+
+    Here are some specific benefits of dropping Docker as a container runtime:
+
+    Vendor neutrality: Kubernetes will be able to support any container runtime that implements the Container Runtime Interface (CRI).
+                       This will give users more choice and flexibility.
+    Reduced complexity: The Kubernetes codebase will be simpler and easier to maintain without the direct integration with Docker.
+    Improved performance: Kubernetes could potentially perform better without the overhead of the dockershim.
+    
+    It is important to note that dropping Docker as a container runtime does not mean that Docker cannot be used with Kubernetes. 
+    Docker is still a popular container runtime, and it can still be used with Kubernetes by installing a CRI adapter, such as cri-dockerd.
+
+Pods:
+    Pod is a smallest deployable unit in k8s. k8s cant manage the container directly. Pod can contain two or more containers.
+    Conatiners in pod share local host, volumes.
+
+    why pod is created instead of container:
+    In Kubernetes (K8s), we use Pods to deploy containers instead of directly creating containers for several important reasons:
+    * Grouping: Pods group one or more containers together. Containers within a Pod share networking, which simplifies communication between them.
+    * Atomicity: Pods ensure that containers are deployed and scaled together as a single unit, ensuring consistency.
+    * Shared Resources: Containers in a Pod share resources like IP addresses, reducing network complexity.
+    * Synchronization: Pods support sidecar containers for auxiliary tasks like logging and monitoring.
+    * Scaling: You can scale Pods horizontally for load balancing and high availability.
+    * Control: Pods allow fine-grained control over container lifecycle, readiness, and probes.
+    * Abstractions: Higher-level abstractions in K8s simplify application deployment and management.
+    In essence, Pods make it easier to manage containers, promote consistent deployments, and offer useful features for distributed applications.
+
+
+Replicaset:
+    Resplicaset ensures that desired number of pods are always running. If any of the pod fails, replicaset starts another pod.
+
+Deployment:
+    A Deployment is a higher-level resource that provides declarative updates to applications. It is built on top of ReplicaSets.
+    Deployments allow you to describe an application's desired state, including the number of replicas, container image versions, and more.
+    They enable rolling updates and rollbacks, making it easy to change application versions without downtime.
+    Deployments automatically manage the creation and scaling of ReplicaSets to achieve the desired state.
+    They can be used to manage stateless applications.
+
+    Deployment is a higher-level abstraction that focuses on application management. It uses ReplicaSets internally to achieve the desired state.
+
+Statefulset:
+    A StatefulSet in Kubernetes is a resource used to deploy and manage stateful applications. It provides stable network identities, 
+    ordered deployment and scaling, and persistent storage, making it suitable for databases, queues, and other stateful services.
+
+Namespaces:
+   namespaces are used to create isolated environments within a cluster, helping organize and secure resources. They enable resource scoping, 
+   access control, and network isolation, making it easier to manage applications and teams within a cluster.
+   Common practices include using separate namespaces for different environments and using RBAC to control access.
+   Resource quotas can be applied to namespaces to limit the amount of CPU, memory, and other resources that can be consumed by resources within that namespace. 
+
+
+#Imperative commands
+
+#

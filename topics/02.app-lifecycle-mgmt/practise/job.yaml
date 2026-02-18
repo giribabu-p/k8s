@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dummy-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: job-container
+        image: busybox:latest
+        command: ["echo", "Hello from the job"]
+      restartPolicy: Never
+  backoffLimit: 3  #number of times the job will be retried if it fails.
+  completions: 3  #number of successful completions required for the job to be considered successful.
+  parallelism: 2  # Maximum number of Pods running in parallel

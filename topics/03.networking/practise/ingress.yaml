@@ -1,0 +1,31 @@
+#In this example, the Ingress resource defines routing rules for the host myapp.example.com, 
+#directing requests to different paths to the corresponding backend services app1-service and app2-service. 
+#It also specifies SSL/TLS termination using a secret named my-tls-secret
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dummy-ingress
+spec:
+  rules:
+    - host: myapp.example.com
+      http:
+        paths:
+          - path: /app1
+            pathType: Prefix
+            backend:
+              service:
+                name: app1-service
+                port:
+                  number: 80
+          - path: /app2
+            pathType: Prefix
+            backend:
+              service:
+                name: app2-service
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - myapp.example.com
+      secretName: my-tls-secret

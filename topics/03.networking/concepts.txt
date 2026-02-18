@@ -1,0 +1,69 @@
+Services:
+    Services are a fundamental resource that enable network communication and load balancing between groups of Pods. 
+    Services provide a consistent and stable endpoint to access one or more Pods, regardless of the Pods' dynamic nature. 
+    Services play a crucial role in making applications within a cluster discoverable and accessible to other services or external clients.
+
+    Kubernetes supports several types of Services, including:
+    ClusterIP: The default type, which exposes the Service on a cluster-internal IP. It's accessible only from within the cluster.
+    NodePort: Exposes the Service on a specific port on each node in the cluster. It allows external access to the Service using the node's IP and the NodePort.
+    LoadBalancer: Requests a cloud provider's load balancer to route external traffic to the Service. The cloud provider assigns an external IP to the Service.
+    ExternalName: Maps the Service to an external DNS name. It's used for accessing external services from within the cluster.
+
+    Service Discovery:
+        Services provide DNS-based service discovery within the cluster. Each Service is assigned a DNS name in the format <service-name>.<namespace>.svc.cluster.local.
+        Pods can access Services using these DNS names, allowing dynamic resolution of Service IP addresses.
+
+    Services use label selectors to determine which Pods they should route traffic to. Labels on Pods are matched with labels specified in the Service definition.
+
+    Kubernetes maintains a list of endpoints (IP addresses and ports) associated with a Service. These endpoints are automatically updated as Pods are created or terminated.
+
+    Services are essential for enabling communication between different parts of a distributed application in Kubernetes. They abstract the underlying network complexity, 
+    making it easier to build scalable and reliable microservices architectures.
+
+
+Ingress:
+    An ingress controller in Kubernetes is a piece of software that sits in front of your Kubernetes cluster and manages incoming traffic. Ingress controllers allow you to expose your Kubernetes applications to the outside world using a variety of protocols, such as HTTP, HTTPS, and TCP.
+
+    Ingress controllers work by watching for changes to the Kubernetes API. When they see a change to a service, they will update their configuration to route traffic to the appropriate pods.
+
+    There are a number of different ingress controllers available, each with its own strengths and weaknesses. 
+    Some popular ingress controllers include: Nginx Ingress Controller, HAProxy, Traefik .
+
+    To use an ingress controller, you first need to deploy it to your Kubernetes cluster. Once the ingress controller is deployed, you need to create an ingress resource. An ingress resource defines how traffic should be routed to your Kubernetes applications.
+
+    In summary, while Kubernetes services are suitable for basic networking and load balancing, Ingress controllers and Ingress resources offer a higher level of functionality and flexibility for managing HTTP/HTTPS traffic. They are particularly useful when you need advanced routing, SSL/TLS termination, or want to expose multiple applications under the same domain with different paths.
+    The choice between services and Ingress depends on your specific use case and requirements.
+
+    Kubernetes services are a great way to expose your applications to other applications running in the cluster. However, services are not very well suited for exposing applications to the outside world.
+    The main problem with services is that they are not addressable. This means that you cannot directly connect to a service from outside the cluster. You need to use a load balancer or NodePort to expose a service to the outside world.
+    Ingress controllers and Ingress resources solve this problem by providing a layer of abstraction between your applications and the outside world. Ingress controllers listen for changes to the Kubernetes API and update their configuration to route traffic to the appropriate pods.
+    Ingress controllers also support a number of features that are not available with services, such as SSL termination, load balancing, and path-based routing.
+
+Network policies:
+    Network Policies in Kubernetes are a set of rules and policies that control the flow of network traffic to and from Pods. They provide fine-grained control over how Pods within a cluster can communicate with each other and with external resources. Network Policies help enhance the security and isolation of applications by enforcing network segmentation and access controls. 
+    Here are the key aspects of Network Policies in Kubernetes:
+       - By default, all network traffic between Pods is allowed within a cluster. Network Policies implement a "default deny" approach, meaning that unless explicitly allowed by a policy, all traffic is denied.
+       - Network Policies use labels to select Pods that the policies will apply to. Labels are used to match traffic source and destination Pods.
+       - Network Policies consist of a set of rules that define how traffic should be allowed or denied. Each rule specifies criteria such as source Pods, destination Pods, and allowed ports/protocols.
+       - Network Policies can define both ingress rules (rules for incoming traffic) and egress rules (rules for outgoing traffic) for Pods.
+       - Policies can define communication rules between Pods in the same namespace, Pods in different namespaces, or a combination of both.
+       - If no Network Policy is defined for a namespace, all traffic is allowed by default. You can enforce stricter default policies by explicitly defining a Network Policy.
+       - Network Policies can have different priorities, and they are applied in priority order. Policies with higher priorities take precedence.
+       - Network Policies are implemented by network plugins like Calico, Cilium, and others. These plugins enforce the policy rules in the underlying network infrastructure.
+    Solutions that support network policies are calico, weave-net, romana,... and Flannel doesn't support netwotk policies.  
+
+CoreDNS:
+    CoreDNS is a lightweight, extensible DNS server for Kubernetes. It is the default DNS server for Kubernetes clusters and is used to resolve DNS queries for services, pods, and other Kubernetes resources.
+
+    CoreDNS is highly configurable and can be used to implement a variety of DNS features, such as:
+        Service discovery: CoreDNS can be used to resolve DNS queries for services, which allows applications to discover and communicate with each other in a Kubernetes cluster.
+                          Kubernetes relies on CoreDNS to provide service discovery by exposing service names in the <service-name>.<namespace>.svc.cluster.local format.
+                          Pods can discover and communicate with services using DNS names in the <service-name>.<namespace>.svc.cluster.local format, enabled by cluster DNS services like CoreDNS.       
+        Pod discovery: CoreDNS can also be used to resolve DNS queries for pods, which allows applications to discover and communicate with each other directly.
+        Namespacing: CoreDNS can be used to create namespaces for DNS queries, which allows you to isolate DNS traffic for different groups of applications.
+        Load balancing: CoreDNS can be used to load balance traffic across multiple pods or services.
+        TLS termination: CoreDNS can be used to terminate TLS connections, which can improve the security and performance of your applications.
+        
+        CoreDNS is a powerful and flexible DNS server that can be used to implement a variety of DNS features in Kubernetes.
+
+

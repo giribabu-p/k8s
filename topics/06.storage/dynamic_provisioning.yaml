@@ -1,0 +1,47 @@
+#Pre-requisite: Kubernetes 1.13+ (CSI 1.0), The aws-ebs-csi-driver installed.
+#This example shows you how to dynamically provision an EBS volume in your cluster.
+#sc
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-sc
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+reclaimPolicy: Delete #when a PVC using this StorageClass is deleted, the associated PV is also deleted.
+allowVolumeExpansion: true #allowing PVCs to be resized.
+volumeBindingMode: Immediate  #PVs are bound immediately when PVCs are created.
+
+---
+#claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ebs-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ebs-sc
+  resources:
+    requests:
+      storage: 4Gi
+
+---
+#pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app
+spec:
+  containers:
+  - name: app
+    image: centos
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do echo $(date -u) >> /data/out.txt; sleep 5; done"]
+    volumeMounts:
+    - name: persistent-storage
+      mountPath: /data
+  volumes:
+  - name: persistent-storage
+    persistentVolumeClaim:
+      claimName: ebs-claim

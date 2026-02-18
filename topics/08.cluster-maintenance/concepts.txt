@@ -1,0 +1,12 @@
+#
+#CLuster Installation ways
+
+#Os upgrades
+
+#k8s software versions
+
+#Cluster upgrade process
+
+#Backup and restore methods
+
+#

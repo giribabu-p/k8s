@@ -1,0 +1,7 @@
+#Application failure
+
+#control plane failure
+
+#Worker node failure
+
+#Network Troubleshooting

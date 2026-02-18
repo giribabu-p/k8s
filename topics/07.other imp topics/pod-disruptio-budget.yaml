@@ -1,0 +1,11 @@
+#the PDB named "my-pdb" specifies that at least 2 Pods with the label app: my-app must be available at all times. 
+#This constraint ensures that the application maintains a minimum level of availability, even during disruptions.
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: my-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: my-app

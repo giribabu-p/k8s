@@ -1,0 +1,307 @@
+Imperative and declarative:
+    Two different approaches for managing resources and configurations within the k8s cluster.
+    Imperative management is an approach where you specify setp-by-step instructions to achieve a desrired state.
+    (kubectl run , kubectl edit commands)
+    Declarative management is an approach where you specify the desired end state of a resource and a system takes care of bringing
+    the actual state in line with the desired state. (kubectl apply -f commands)
+
+kubectl apply:
+    The kubectl apply command is used to create, update, or delete resources defined in YAML or JSON manifest files. It  works 
+    in a declarative manner, meaning it ensures that the desired state of resources matches what is defined in the manifest files.
+    The kubectl apply command is idempotent, meaning you can run it multiple times without causing harm or creating duplicate resources. 
+    If a resource already matches the desired state, no changes are made.
+
+Commands and Arguments:
+    Unlike virtual machines, containers are not meant to host an operating system. Containers are meant to run a specific task or process
+    such as an instance of web server/ application server or a database or simply to carry out some task. Once the task is complete, the container exits.
+    container only lives, as long as the porcess inside it is alive. To overcome this, we define ENTRYPOINT(sleep) and CMD(5) instructions.
+
+    In Docker, the CMD instruction in a Dockerfile defines the default command to run when a container starts. The CMD instruction can have both a 
+    command and arguments, and it's typically specified as an array: CMD ["executable", "arg1", "arg2"]
+    The ENTRYPOINT instruction is another option in Docker. It defines the main command that cannot be overridden at runtime, but it can accept 
+    additional arguments from CMD or at runtime.
+
+    > docker run ubuntu:latest 10 #Override cmd instruction at runtime
+    > docker run ubuntu:latest --entrypoint echo 5 # override entrypoint at runtime.
+
+    ENTRYPOINT corresponds to command property in k8s and CMD corresponds to args property in k8s.
+    args: ["11"] #override CMD instruction in k8s
+    command: ["echo"] #override ENTRYPOINT instruction in k8s.
+
+    In summary, while both Docker and K8s provide ways to specify the command and arguments for a container, Docker primarily uses the CMD instruction 
+    in the Dockerfile, while K8s uses the command and args fields in the Pod's YAML manifest. In K8s, you can override these values at runtime, providing 
+    greater flexibility and customization when deploying containers.
+
+Environment variables:
+    In Kubernetes (K8s), you can set environment variables for containers running inside Pods using several methods. Environment variables are a way to pass 
+    configuration information, credentials, or runtime parameters to applications running in containers. 
+
+ConfigMpas and Secrets:
+    ConfigMaps and Secrets in Kubernetes (K8s) are resources that allow you to manage configuration data and sensitive information separately from your application code. 
+    These resources help you keep your configuration data secure and separate from your application code, making it easier to manage and update configuration settings.
+
+Security contexts:
+    In Kubernetes, a Security Context is a configuration that allows you to set security-related attributes for Pods and containers. It defines the security settings and privileges
+    that are applied to a specific Pod or container, ensuring that the application runs in a secure and controlled manner. Security Contexts can be applied at both the Pod and container level.
+
+    Pod-Level Security Context:
+    You can specify a security context at the Pod level, which applies to all containers within that Pod unless overridden at the container level. 
+    Common settings include:
+        RunAsUser: Specifies the user ID under which the processes within the containers should run.
+        RunAsGroup: Specifies the group ID for the processes.
+        FSGroup: Specifies the group ID for the file system.
+        SELinuxOptions: SELinux-related options for the Pod.
+
+
+Service account:
+    There are two types of accounts in k8s. User account and service account. User account is used by the humans while service account is for applications.
+    User account could be an admin account to perform admin tasks or a Developer accessing the cluster to deploy applications.(using kubectl commands)
+    Service account could be an account used by application to intercat with k8s cluster. For example, a monitoring app like prometheus uses service 
+    account to poll the k8s api for performance metrics. An automated build tool like Jenkins uses a Service account to deploy applications on the Kubernetes.
+
+    Flow: When a sa is created, it first creates sa object and then generates a token for the sa. and then creates secret object then stores the token inside 
+    the secret object. The secret object is then linked to the service account. TO view token, describe secret object. This token can then be used as an authentication 
+    bearer token while making a REST call to k8s API. 
+    Example: To access k8s dashboard, we need to provide token to authenticate.
+
+    Each ns has its own deafult service account. Whenever a pod is created , the default sa and its token is automatically mounted to pod as volume mount.
+    (volumes is automatically created fom the secret named default token.)
+    The default sa is restricted. It only has permissions to run basic API queries.
+
+Resource requirements:
+    In Kubernetes, resource requests and limits are used to allocate and control the amount of CPU and memory resources that a container or Pod can use within a cluster.
+    These resource settings are crucial for efficient resource management, isolation, and performance tuning. 
+
+    Resource Requests & Limits:
+        A CPU request specifies the minimum amount of CPU that a container or Pod requires to run efficiently. It is a guarantee that the container will get at least this amount of CPU when it needs it.
+        A memory request specifies the minimum amount of memory that a container or Pod needs to run efficiently. It is a guarantee that the container will get at least this amount of memory when it needs it.
+        Resource requests are used by the Kubernetes scheduler to make decisions about where to place Pods within the cluster, ensuring that the requested resources are available on the selected node.
+
+        A CPU limit specifies the maximum amount of CPU that a container or Pod is allowed to consume. If a container exceeds its CPU limit, it may be throttled.
+        A memory limit specifies the maximum amount of memory that a container or Pod is allowed to consume. If a container exceeds its memory limit, it may be terminated (OOM kill).
+
+        Monitor your cluster's resource utilization to fine-tune resource requests and limits for optimal performance.
+
+Taints & Tolerations:
+    In Kubernetes, taints and tolerations are mechanisms that allow you to control the placement of pods on nodes in a cluster. They are used to ensure that certain pods are scheduled only on nodes that meet specific
+     criteria or requirements. Taints are applied to nodes, and tolerations are specified in pod definitions to indicate that a pod can tolerate nodes with certain taints.
+
+    Taints:
+        > kubectl taint nodes node-1 app=example:NoSchedule 
+        This command applies a taint with the key app and value example to node-1, with the NoSchedule effect, meaning pods without tolerations for this taint will not be scheduled on node-1.      
+
+        An effect can be one of the following:
+        NoSchedule: Pods that do not tolerate this taint will not be scheduled on the node.
+        PreferNoSchedule: Pods that do not tolerate this taint will be discouraged from scheduling on the node but can still do so if necessary.
+        NoExecute: Existing pods on the node that do not tolerate this taint will be evicted.
+
+    Tolerations:
+        Tolerations are attributes defined within a pod's specification to indicate that the pod can tolerate nodes with specific taints. A toleration consists of:
+        An operator can be one of the following:
+        Exists: The pod tolerates any taint with the specified key, regardless of the value.
+        Equal: The pod tolerates a taint with the specified key and value.
+
+    Use Cases:
+        Taints and tolerations are commonly used in scenarios where certain nodes have specialized hardware or software requirements. For example, GPU nodes may have a taint, and GPU-intensive pods may 
+        have tolerations to ensure they are scheduled on the appropriate nodes.
+        They can also be used for node maintenance. When a node needs to be drained for maintenance, it can be tainted with NoSchedule, and existing pods that tolerate this taint will not be scheduled on that node.
+
+NodeSelector and NodeAffinity:
+    In Kubernetes, both node selectors and node affinity are mechanisms for controlling the placement of pods on specific nodes in a cluster. They allow you to define rules and requirements for where pods should be 
+    scheduled based on node attributes and labels.
+
+    NodeSelectors:
+        They are defined at the pod level and specify a set of node labels that must match a node's labels for the pod to be scheduled on that node.
+        Node selectors are effective for scheduling a pod on nodes with specific characteristics or capabilities.
+        However, they do not provide fine-grained control for more complex scheduling requirements.
+
+        Example: In this example, the pod has a nodeSelector that specifies it should be scheduled on nodes with the label diskType=ssd. It will only be placed on nodes that have this label.
+        spec:
+          nodeSelector:
+            diskType: ssd 
+
+    Node Affinity:
+        Node Affinity is a more flexible and fine-grained mechanism.
+        It allows you to specify complex rules for pod placement based on node attributes.
+        Node affinity can be "required" or "preferred":
+            Required Node Affinity: Specifies that the pod must be scheduled on nodes that match the defined rules. If no such node is available, the pod will not be scheduled.
+            Preferred Node Affinity: Suggests that the pod prefers to be scheduled on nodes that match the rules, but it can be scheduled on nodes that do not match if necessary.
+        Node affinity rules can use label operators such as In, NotIn, Exists, and DoesNotExist.
+
+        Use Cases:
+
+            Node Selectors: Use node selectors for straightforward scheduling requirements where you want pods to be placed on nodes with specific labels, such as nodes with SSD storage or specialized hardware.
+
+            Node Affinity: Use node affinity when you need more advanced scheduling requirements. For example, you might want to ensure that certain pods are scheduled on nodes in a particular data center, 
+                        availability zone, or region, or when you want to distribute pods across nodes based on specific characteristics.
+
+
+Multi-container Pods:
+    The idea of decoupling large monolithic application into sub components known as microservices, enables us to develop and deploy a set of independent, small and reusable code.
+This architecture can then help us scale up and down as well modify each service as required as opposed to modify the entire application.   
+Multi-container Pods in Kubernetes are Pods that contain more than one container. These containers share the same network namespace, storage, and can communicate with each other using inter-process 
+communication (IPC) mechanisms. Multi-container Pods are used to encapsulate related processes and enable them to work together closely within the same Pod, often for the purpose of achieving a specific functionality or task.
+
+    Use Cases:
+        Sidecar Containers: One common use case for Multi-container Pods is the implementation of sidecar containers. Sidecars are auxiliary containers that provide support services to the primary container, such as logging, monitoring, or handling configuration updates.
+        Helper Containers: Multi-container Pods can include helper containers that perform tasks like data synchronization, pre-processing, or cleanup, which are related to the primary container's functionality.
+        Shared Resources: Multi-container Pods can share resources and avoid duplicating data or workloads. For example, they can share a common database connection pool or cache.
+
+    Design patterns:
+        Sidecar pattern:
+            This pattern is used to add functionality to a container without modifying the container itself. For example, you could use a sidecar container to provide logging, monitoring, or caching services to a web application container.
+            Example:
+            A web application container and a logging container could be placed in the same pod using the sidecar pattern. The logging container would collect logs from the web application container and send them to a centralized logging system.
+        Adapter pattern:
+            This pattern is used to adapt one container to another. For example, you could use an adapter container to convert the output of one container to a format that can be consumed by another container.
+            Example:
+            A web application container that outputs data in JSON format and a database container that expects data in CSV format could be placed in the same pod using the adapter pattern. The adapter container would convert the JSON data to CSV data before sending it to the database container.
+        Ambassador pattern:
+            uses a sidecar container to provide a reverse proxy for a microservice. The ambassador container intercepts all requests to the microservice and performs a number of tasks, such as: Authentication and authorization, Load balancing, Fault tolerance, Caching.
+            Example:
+            A microservice container and an ambassador container could be placed in the same pod using the ambassador pattern. The ambassador container would intercept all requests to the microservice and perform a number of tasks, such as authentication and authorization, load balancing, fault tolerance, caching, and transformation.
+
+
+Init containers:
+    Init Containers are a special type of container in Kubernetes that run before the main containers within the same Pod. They are primarily used for tasks related to Pod initialization and preparation. Init Containers are typically used to ensure that certain conditions are met before the main application containers start running.
+  
+    Init Containers are executed sequentially in the order they are defined within the Pod's YAML specification.
+    They run to completion before the main containers in the Pod are started.
+    Init Containers are often used for tasks like data initialization(download from internet, perform db schema operations), setup, configuration, or dependencies installation.
+    Init Containers can fetch secrets or ConfigMaps and make them available as files or environment variables for the main containers.
+
+Probes:
+    In Kubernetes, probes are used to determine the health and readiness of a container within a Pod. There are three types of probes: liveness, readiness, and startup probes. These probes help Kubernetes manage the lifecycle of containers and ensure that they are running correctly. 
+    We can customize the paths, ports, delays, and thresholds according to your application's requirements. The liveness probe is typically used to restart containers when they become unhealthy, while the readiness probe is used to determine when a container can receive traffic from services. The startup probe is useful when you want 
+    to delay service availability until an application is fully initialized.
+
+    Liveness Probe Failures:
+        If the liveness probe fails for a container, Kubernetes will attempt to restart the container. The number of restarts is tracked in the restartCount field of the container's status.
+        If the liveness probe continues to fail consecutively, Kubernetes will keep restarting the container based on the failureThreshold specified in the liveness probe configuration. Once the failure threshold is reached, the container will not be restarted further.
+        The Pod itself remains in the "Running" state, but the container in question is considered unhealthy.
+    Readiness Probe Failures:
+        If the readiness probe fails for a container, Kubernetes will not remove the container from the Pod but will mark the container as "not ready."
+        The container remains part of the Pod, but it is excluded from receiving network traffic because it is considered "not ready."
+        Other containers within the same Pod that have successful readiness probes continue to receive traffic.
+    Startup Probe Failures:
+        If the startup probe fails for a container, Kubernetes will continue to wait for the specified duration (determined by the probe's failureThreshold) before marking the container as "not ready."
+        Once the startup probe's failure threshold is reached, the container is marked as "not ready," similar to a readiness probe failure.
+        During the startup probe's failure window, the container is considered "not ready" but is not restarted.
+
+Labels, selectors and annotations:
+    In Kubernetes, labels, selectors, and annotations are metadata mechanisms used to organize, categorize, and provide additional information about resources such as Pods, Services, Deployments, and more. They play important roles in managing and working with Kubernetes resources.
+
+    Labels:
+        Labels are key-value pairs that can be attached to Kubernetes objects, such as pods, deployments, and services. They can be used to organize and manage your Kubernetes objects.
+        Labels are a powerful tool for managing Kubernetes objects because they can be used to:
+            Group objects together based on their characteristics.
+            Select objects based on their labels.
+            Automatically manage objects based on their labels.
+            For example, you could use labels to group your pods together based on their environment (e.g., production, staging, or development). 
+            You could then use selectors to select only the pods in a specific environment for deployment or scaling.
+ 
+    Selectors:
+        Selectors are used to filter and identify resources based on their labels. They allow you to create sets of resources that match specific label criteria.
+        Use Cases:
+            Service discovery: Services use selectors to identify the Pods they should load balance traffic to.
+            Replication Controllers and Deployments use selectors to manage sets of Pods with desired labels.
+        Example:
+          spec:
+            selector:
+              matchLabels:
+                env: production
+
+    Annotations:
+        Annotations are key-value pairs similar to labels, but they are used to provide additional information about a resource. Unlike labels, annotations do not affect the resource's behavior, but they can be used to store metadata, comments, or reference external resources.        Annotations can be used for a variety of purposes, such as:
+        Use Cases:
+            Storing metadata: Annotations are used to store information such as version numbers, checksums, or timestamps related to the resource.
+            Adding documentation: Annotations can include documentation or comments to help operators and developers understand the resource's purpose.
+            Integration with external systems: Annotations are often used to store references or information that external tools or automation systems may need.
+        Example:
+            metadata:
+            annotations:
+                description: "This is a production service"
+                created-by: "John Doe"
+    Examples:
+        Working with Labels and Selectors:
+            kubectl label pod my-pod environment=production
+            kubectl get pods -l environment=production
+            kubectl get pods --selector=app=myapp
+            kubectl label pod my-pod --overwrite environment=staging
+        Working with Annotations:
+            kubectl annotate pod my-pod description="This is a test pod"
+            kubectl describe pod my-pod | grep Annotation
+            kubectl get pod my-pod -o=jsonpath='{.metadata.annotations.description}'
+
+
+Updates & Rollbacks:
+    Updates:
+        Deployment strategies control how Kubernetes updates your application pods.
+        There are four main deployment strategies:
+            RollingUpdate: 
+                This strategy replaces old pods with new pods in a rolling manner. 
+                This means that Kubernetes will gradually replace old pods with new pods, one by one. 
+                This strategy is the default deployment strategy and is the most common strategy used.
+                Use this strategy for most deployments. It is a good general-purpose strategy that is easy to use and manage.
+                Updates can be controlled using a number of parameters, such as:
+                    MaxUnavailable: This parameter specifies the maximum number of pods that can be unavailable during the rollout.
+                    MaxSurge: This parameter specifies the maximum number of pods that can be created above the desired number of pods during the rollout.
+                    ProgressDeadlineSeconds: This parameter specifies the number of seconds that Kubernetes will wait for the rollout to complete before it is considered to have failed.
+            Recreate: 
+                This strategy replaces all of the old pods with new pods at once. 
+                This strategy is useful for deployments where you need to ensure that all of the pods are running the latest version of your application at the same time.
+                Use this strategy for deployments where you need to ensure that all of the pods are running the latest version of your application at the same time.
+            BlueGreen: 
+                This strategy deploys a new version of your application to a new set of pods (the "green" deployment) while keeping the old version of your application running in the old set of pods (the "blue" deployment). 
+                Once the new version of your application is ready, Kubernetes will switch traffic from the blue deployment to the green deployment.
+                Use this strategy for deployments where you need to minimize downtime.      
+            Canary: 
+                This strategy deploys a new version of your application to a small subset of your pods (the "canary" deployment) and gradually increases the number of pods in the canary deployment until all of the pods are running the new version of your application. 
+                This strategy is useful for deployments where you want to test the new version of your application with a small subset of your users before deploying it to all of your users.
+                Use this strategy for deployments where you want to test the new version of your application with a small subset of your users before deploying it to all of your users.
+
+        kubectl set image deployment/my-deployment my-container=my-new-image:latest
+
+    Rollouts:
+        A rollback is a strategy for reverting to a previous version of an application when issues or errors are detected in the new version.
+        Use Case: 
+            Important for quickly restoring service functionality in case of problems during updates.
+        How It Works:
+            Use the kubectl rollout undo command to revert a Deployment to a previous revision.
+            Specify a revision or use the --to-revision flag to roll back to a specific version.
+        Example: 
+            kubectl rollout undo deployment/my-deployment --to-revision=2 to roll back to revision 2 of a Deployment.
+            kubectl rollout history 
+            kubectl rollout restart deployment nginx-deployment 
+            kubectl rollout status 
+     
+Jobs and CronJobs:
+    Jobs and CronJobs are resources used for running batch or scheduled tasks. They provide a way to execute short-lived tasks or jobs on a one-time or recurring basis within a Kubernetes cluster. Here's an overview of both concepts:
+
+    Jobs:
+        Description: 
+            A Job in Kubernetes is a resource used to create and manage one or more Pods that run until a specified number of successful completions. 
+            Jobs are typically used for short-lived, non-replicated tasks, such as data processing, batch jobs, or one-time operations.
+        Use Cases:
+            Running a task that needs to complete successfully once.
+            Running tasks in parallel with a specified number of successful completions.
+            Ensuring that a task runs to completion, even if a Pod fails.
+        How It Works:
+            You define a Job resource, specifying the container image and command to run.
+            Kubernetes creates one or more Pods to run the specified task.
+            The Job monitors the Pods and ensures that the specified number of completions is achieved.
+            If a Pod fails, Kubernetes automatically replaces it until the required number of completions is reached.
+    
+    CronJobs:
+        Description:
+            A CronJob is a resource in Kubernetes that schedules and automates the execution of Jobs based on a cron-like schedule.
+            It allows you to run batch tasks at specified intervals or times, similar to how cron jobs work in traditional Unix systems.
+        Use Cases:
+            Running periodic maintenance tasks.
+            Running data backups on a regular schedule.
+            Triggering batch processing jobs at specific times or intervals.
+        How It Works:
+            You define a CronJob resource with a schedule in cron format (e.g., */15 * * * * for every 15 minutes).
+            The CronJob controller automatically creates Jobs based on the schedule, each running the specified task.
+            Jobs created by CronJobs are managed in the same way as regular Jobs.
+
