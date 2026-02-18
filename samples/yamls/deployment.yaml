@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment 
+metadata: 
+  name: flask-app 
+  labels: 
+    deploy: deployment 
+    app: python-flask
+    env: dev 
+spec: 
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+        - name: my-flask-app
+          image: devopsgiri/flaskapp:1.0
+          ports:
+            - containerPort: 8080
+      imagePullSecrets:
+        - name: dockerhub-secret
